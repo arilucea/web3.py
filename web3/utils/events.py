@@ -164,11 +164,13 @@ def get_event_data(event_abi, log_entry):
     log_topic_types = get_event_abi_types_for_decoding(log_topic_normalized_inputs)
     log_topic_names = get_abi_input_names({'inputs': log_topics_abi})
 
+    #-------------------JAVIER
+    '''
     if len(log_topics) != len(log_topic_types):
         raise ValueError("Expected {0} log topics.  Got {1}".format(
             len(log_topic_types),
             len(log_topics),
-        ))
+        ))'''
 
     log_data = hexstr_if_str(to_bytes, log_entry['data'])
     log_data_abi = exclude_indexed_event_inputs(event_abi)
@@ -219,7 +221,9 @@ def get_event_data(event_abi, log_entry):
         'blockNumber': log_entry['blockNumber'],
     }
 
-    return AttributeDict.recursive(event_data)
+    #return AttributeDict.recursive(event_data)
+    #------------------JAVIER
+    return AttributeDict.recursive(log_entry)
 
 
 @to_tuple
