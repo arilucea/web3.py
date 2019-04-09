@@ -28,6 +28,9 @@ from web3._utils.toolz import (
     merge,
 )
 
+# this script is used for generating the parity fixture
+# to generate geth fixtures use tests/generate_go_ethereum_fixture.py
+
 
 def generate_go_ethereum_fixture(destination_dir):
     with contextlib.ExitStack() as stack:
@@ -66,7 +69,7 @@ def generate_go_ethereum_fixture(destination_dir):
         }
         pprint.pprint(merge(chain_data, static_data))
 
-        shutil.copytree(datadir, destination_dir)
+        shutil.make_archive(destination_dir, 'zip', datadir)
 
 
 def setup_chain_state(web3):
@@ -117,8 +120,8 @@ def setup_chain_state(web3):
     #
     # Block with Transaction
     #
-    web3.personal.unlockAccount(coinbase, common.KEYFILE_PW)
-    web3.miner.start(1)
+    web3.geth.personal.unlockAccount(coinbase, common.KEYFILE_PW)
+    web3.geth.miner.start(1)
     mined_txn_hash = web3.eth.sendTransaction({
         'from': coinbase,
         'to': coinbase,

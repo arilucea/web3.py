@@ -1,10 +1,79 @@
 Release Notes
 =============
 
-Breaking Change to Infura coming March 27th.
- After March 27th, you'll need an API key to interact with Infura.
- Sign up for one at https://infura.io/register.
+v5 Breaking Changes Summary
+   See the :ref:`v5 Migration Guide<migrating_v4_to_v5>`
 
+v5.0.0-alpha.9
+--------------
+Released March 26, 2019
+
+- Breaking Changes
+
+  - Raise error if there is no Infura API Key
+    - `#1294 <https://github.com/ethereum/web3.py/pull/1294>`_ &
+    - `#1299 <https://github.com/ethereum/web3.py/pull/1299>`_
+
+- Misc
+
+  - Upgraded Parity version for integration testing
+    - `#1292 <https://github.com/ethereum/web3.py/pull/1292>`_
+
+v5.0.0-alpha.8
+--------------
+Released March 20, 2019
+
+- Breaking Changes
+
+  - Removed ``web3/utils`` directory in favor of ``web3/_utils``
+    - `#1282 <https://github.com/ethereum/web3.py/pull/1282>`_
+  - Relocated personal RPC endpoints to Parity and Geth class
+    - `#1211 <https://github.com/ethereum/web3.py/pull/1211>`_
+  - Deprecated ``web3.net.chainId()``, ``web3.eth.getCompilers()``,
+    and ``web3.eth.getTransactionFromBlock()``. Removed ``web3.eth.enableUnauditedFeatures()``
+    - `#1270 <https://github.com/ethereum/web3.py/pull/1270>`_
+  - Relocated eth_protocolVersion and web3_clientVersion
+    - `#1274 <https://github.com/ethereum/web3.py/pull/1274>`_
+  - Relocated ``web3.txpool`` to ``web3.geth.txpool``
+    - `#1275 <https://github.com/ethereum/web3.py/pull/1275>`_
+  - Relocated admin module to Geth namespace
+    - `#1288 <https://github.com/ethereum/web3.py/pull/1288>`_
+  - Relocated miner module to Geth namespace
+    - `#1287 <https://github.com/ethereum/web3.py/pull/1287>`_
+
+- Features
+
+  - Implement ``eth_submitHashrate`` and ``eth_submitWork`` JSONRPC endpoints.
+    - `#1280 <https://github.com/ethereum/web3.py/pull/1280>`_
+  - Implement ``web3.eth.signTransaction``
+    - `#1277 <https://github.com/ethereum/web3.py/pull/1277>`_
+
+- Docs
+
+  - Added v5 migration docs
+    - `#1284 <https://github.com/ethereum/web3.py/pull/1284>`_
+
+v5.0.0-alpha.7
+--------------
+Released March 11, 2019
+
+- Breaking Changes
+
+  - Updated JSON-RPC calls that lookup txs or blocks to raise
+    an error if lookup fails
+    - `#1218 <https://github.com/ethereum/web3.py/pull/1218>`_ and
+    `#1268 <https://github.com/ethereum/web3.py/pull/1268>`_
+
+- Features
+
+  - Tuple ABI support
+    - `#1235 <https://github.com/ethereum/web3.py/pull/1235>`_
+
+- Bugfixes
+
+  - One last ``middleware_stack`` was still hanging on.
+    Changed to ``middleware_onion``
+    - `#1262 <https://github.com/ethereum/web3.py/pull/1262>`_
 
 v5.0.0-alpha.6
 --------------
@@ -12,7 +81,7 @@ Released February 25th, 2019
 
 - Features
 
-  - New ``NoABIFound`` error for cases where there is no ABI -
+  - New ``NoABIFound`` error for cases where there is no ABI
     - `#1247 <https://github.com/ethereum/web3.py/pull/1247>`_
 
 - Misc

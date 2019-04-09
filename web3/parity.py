@@ -2,12 +2,59 @@ from eth_utils import (
     is_checksum_address,
 )
 
+from web3._utils import (
+    shh,
+)
+from web3._utils.personal import (
+    ecRecover,
+    importRawKey,
+    listAccounts,
+    newAccount,
+    sendTransaction,
+    sign,
+    unlockAccount,
+)
 from web3._utils.toolz import (
     assoc,
 )
 from web3.module import (
     Module,
+    ModuleV2,
 )
+
+
+class ParityShh(ModuleV2):
+    """
+    https://wiki.parity.io/JSONRPC-shh-module
+    """
+    info = shh.info
+    newKeyPair = shh.newKeyPair
+    addPrivateKey = shh.addPrivateKey
+    newSymKey = shh.newSymKey
+    addSymKey = shh.addSymKey
+    getPublicKey = shh.getPublicKey
+    getPrivateKey = shh.getPrivateKey
+    getSymKey = shh.getSymKey
+    post = shh.post
+    newMessageFilter = shh.newMessageFilter
+    deleteMessageFilter = shh.deleteMessageFilter
+    getFilterMessages = shh.getFilterMessages
+    deleteKey = shh.deleteKey
+    subscribe = shh.subscribe
+    unsubscribe = shh.unsubscribe
+
+
+class ParityPersonal(ModuleV2):
+    """
+    https://wiki.parity.io/JSONRPC-personal-module
+    """
+    ecRecover = ecRecover
+    importRawKey = importRawKey
+    listAccounts = listAccounts
+    newAccount = newAccount
+    sendTransaction = sendTransaction
+    sign = sign
+    unlockAccount = unlockAccount
 
 
 class Parity(Module):
@@ -34,6 +81,12 @@ class Parity(Module):
         return self.web3.manager.request_blocking(
             "parity_netPeers",
             [],
+        )
+
+    def addReservedPeer(self, url):
+        return self.web3.manager.request_blocking(
+            "parity_addReservedPeer",
+            [url],
         )
 
     def traceReplayTransaction(self, transaction_hash, mode=['trace']):

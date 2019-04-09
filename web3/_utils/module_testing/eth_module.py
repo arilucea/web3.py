@@ -14,13 +14,16 @@ from eth_utils import (
     is_list_like,
     is_same_address,
     is_string,
+    to_int,
 )
 from hexbytes import (
     HexBytes,
 )
 
 from web3.exceptions import (
+    BlockNotFound,
     InvalidAddress,
+    TransactionNotFound,
 )
 
 UNKNOWN_ADDRESS = '0xdEADBEeF00000000000000000000000000000000'
@@ -29,7 +32,7 @@ UNKNOWN_HASH = '0xdeadbeef000000000000000000000000000000000000000000000000000000
 
 class EthModuleTest:
     def test_eth_protocolVersion(self, web3):
-        protocol_version = web3.version.ethereum
+        protocol_version = web3.eth.protocolVersion
 
         assert is_string(protocol_version)
         assert protocol_version.isdigit()
@@ -62,6 +65,11 @@ class EthModuleTest:
         hashrate = web3.eth.hashrate
         assert is_integer(hashrate)
         assert hashrate >= 0
+
+    def test_eth_chainId(self, web3):
+        chain_id = web3.eth.chainId
+        # chain id value from geth fixture genesis file
+        assert to_int(hexstr=chain_id) == 131277322940537
 
     def test_eth_gasPrice(self, web3):
         gas_price = web3.eth.gasPrice
@@ -194,6 +202,24 @@ class EthModuleTest:
         )
         assert new_signature != signature
 
+    def test_eth_signTransaction(self, web3, unlocked_account):
+        txn_params = {
+            'from': unlocked_account,
+            'to': unlocked_account,
+            'value': 1,
+            'gas': 21000,
+            'gasPrice': web3.eth.gasPrice,
+            'nonce': 0,
+        }
+        result = web3.eth.signTransaction(txn_params)
+        signatory_account = web3.eth.account.recoverTransaction(result['raw'])
+        assert unlocked_account == signatory_account
+        assert result['tx']['to'] == txn_params['to']
+        assert result['tx']['value'] == txn_params['value']
+        assert result['tx']['gas'] == txn_params['gas']
+        assert result['tx']['gasPrice'] == txn_params['gasPrice']
+        assert result['tx']['nonce'] == txn_params['nonce']
+
     def test_eth_sendTransaction_addr_checksum_required(self, web3, unlocked_account):
         non_checksum_addr = unlocked_account.lower()
         txn_params = {
@@ -278,7 +304,7 @@ class EthModuleTest:
             'gas': 21000,
             'gasPrice': web3.eth.gasPrice,
         }
-        with pytest.raises(ValueError):
+        with pytest.raises(TransactionNotFound):
             web3.eth.replaceTransaction(
                 '0x98e8cc09b311583c5079fa600f6c2a3bea8611af168c52e4b60b5b243a441997',
                 txn_params
@@ -485,7 +511,7 @@ class EthModuleTest:
         assert block['hash'] == empty_block['hash']
 
     def test_eth_getBlockByHash_not_found(self, web3, empty_block):
-        with pytest.raises(ValueError):
+        with pytest.raises(BlockNotFound):
             web3.eth.getBlock(UNKNOWN_HASH)
 
     def test_eth_getBlockByNumber_with_integer(self, web3, empty_block):
@@ -498,7 +524,7 @@ class EthModuleTest:
         assert block['number'] == current_block_number
 
     def test_eth_getBlockByNumber_not_found(self, web3, empty_block):
-        with pytest.raises(ValueError):
+        with pytest.raises(BlockNotFound):
             web3.eth.getBlock(12345)
 
     def test_eth_getBlockByNumber_pending(self, web3, empty_block):
@@ -529,16 +555,6 @@ class EthModuleTest:
         assert is_dict(transaction)
         assert transaction['to'] is None, "to field is %r" % transaction['to']
 
-    def test_eth_getTransactionFromBlockHashAndIndex(self, web3, block_with_txn, mined_txn_hash):
-        transaction = web3.eth.getTransactionFromBlock(block_with_txn['hash'], 0)
-        assert is_dict(transaction)
-        assert transaction['hash'] == HexBytes(mined_txn_hash)
-
-    def test_eth_getTransactionFromBlockNumberAndIndex(self, web3, block_with_txn, mined_txn_hash):
-        transaction = web3.eth.getTransactionFromBlock(block_with_txn['number'], 0)
-        assert is_dict(transaction)
-        assert transaction['hash'] == HexBytes(mined_txn_hash)
-
     def test_eth_getTransactionByBlockHashAndIndex(self, web3, block_with_txn, mined_txn_hash):
         transaction = web3.eth.getTransactionByBlock(block_with_txn['hash'], 0)
         assert is_dict(transaction)
@@ -565,7 +581,7 @@ class EthModuleTest:
             'gas': 21000,
             'gasPrice': web3.eth.gasPrice,
         })
-        with pytest.raises(ValueError):
+        with pytest.raises(TransactionNotFound):
             web3.eth.getTransactionReceipt(txn_hash)
 
     def test_eth_getTransactionReceipt_with_log_entry(self,
@@ -596,22 +612,6 @@ class EthModuleTest:
 
     def test_eth_getUncleByBlockNumberAndIndex(self, web3):
         # TODO: how do we make uncles....
-        pass
-
-    def test_eth_getCompilers(self, web3):
-        # TODO: do we want to test this?
-        pass
-
-    def test_eth_compileSolidity(self, web3):
-        # TODO: do we want to test this?
-        pass
-
-    def test_eth_compileLLL(self, web3):
-        # TODO: do we want to test this?
-        pass
-
-    def test_eth_compileSerpent(self, web3):
-        # TODO: do we want to test this?
         pass
 
     def test_eth_newFilter(self, web3):
@@ -826,3 +826,24 @@ class EthModuleTest:
 
         failure = web3.eth.uninstallFilter(filter.filter_id)
         assert failure is False
+
+    def test_eth_getTransactionFromBlock_deprecation(self, web3, block_with_txn):
+        with pytest.raises(DeprecationWarning):
+            web3.eth.getTransactionFromBlock(block_with_txn['hash'], 0)
+
+    def test_eth_getCompilers_deprecation(self, web3):
+        with pytest.raises(DeprecationWarning):
+            web3.eth.getCompilers()
+
+    def test_eth_submitHashrate(self, web3):
+        # node_id from EIP 1474: https://github.com/ethereum/EIPs/pull/1474/files
+        node_id = '59daa26581d0acd1fce254fb7e85952f4c09d0915afd33d3886cd914bc7d283c'
+        result = web3.eth.submitHashrate(5000, node_id)
+        assert result is True
+
+    def test_eth_submitWork(self, web3):
+        nonce = 1
+        pow_hash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
+        mix_digest = '0xD1FE5700000000000000000000000000D1FE5700000000000000000000000000'
+        result = web3.eth.submitWork(nonce, pow_hash, mix_digest)
+        assert result is False

@@ -13,14 +13,17 @@ from web3.version import (
     Version,
 )
 
+# This file is being left in since the Version module is being experimented on for
+# async behavior. But, this file along with web3/version.py should be removed eventually.
+
 
 @pytest.fixture
 def blocking_w3():
     return Web3(
         EthereumTesterProvider(),
         modules={
-            'blocking_version': BlockingVersion,
-            'legacy_version': Version
+            "blocking_version": (BlockingVersion,),
+            "legacy_version": (Version,),
         })
 
 
@@ -30,14 +33,15 @@ def async_w3():
         AsyncEthereumTesterProvider(),
         middlewares=[],
         modules={
-            'async_version': AsyncVersion,
+            'async_version': (AsyncVersion,),
         })
 
 
-def test_blocking_version(blocking_w3):
-    assert blocking_w3.blocking_version.api == blocking_w3.legacy_version.api
-    assert blocking_w3.blocking_version.node == blocking_w3.legacy_version.node
-    assert blocking_w3.blocking_version.ethereum == blocking_w3.legacy_version.ethereum
+def test_legacy_version_deprecation(blocking_w3):
+    with pytest.raises(DeprecationWarning):
+        blocking_w3.legacy_version.node
+    with pytest.raises(DeprecationWarning):
+        blocking_w3.legacy_version.ethereum
 
 
 @pytest.mark.asyncio

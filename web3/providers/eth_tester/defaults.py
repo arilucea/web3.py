@@ -162,7 +162,7 @@ API_ENDPOINTS = {
         'listening': static_return(False),
     },
     'eth': {
-        'protocolVersion': static_return('63'),
+        'protocolVersion': static_return(63),
         'syncing': static_return(False),
         'coinbase': compose(
             operator.itemgetter(0),
@@ -170,6 +170,7 @@ API_ENDPOINTS = {
         ),
         'mining': static_return(False),
         'hashrate': static_return(0),
+        'chainId': static_return('0x3d'),
         'gasPrice': static_return(1),
         'accounts': call_eth_tester('get_accounts'),
         'blockNumber': compose(
@@ -201,6 +202,7 @@ API_ENDPOINTS = {
         )),
         'getCode': call_eth_tester('get_code'),
         'sign': not_implemented,
+        'signTransaction': not_implemented,
         'sendTransaction': call_eth_tester('send_transaction'),
         'sendRawTransaction': call_eth_tester('send_raw_transaction'),
         'call': call_eth_tester('call'),  # TODO: untested

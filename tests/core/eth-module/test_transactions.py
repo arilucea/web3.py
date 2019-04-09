@@ -2,6 +2,7 @@ import pytest
 
 from web3.exceptions import (
     TimeExhausted,
+    TransactionNotFound,
     ValidationError,
 )
 from web3.middleware.simulate_unmined_transaction import (
@@ -15,13 +16,12 @@ RECEIPT_TIMEOUT = 0.2
     'make_chain_id, expect_success',
     (
         (
-            lambda web3: web3.net.chainId,
+            lambda web3: web3.net.version,
             True,
         ),
         pytest.param(
             lambda web3: 999999999999,
             False,
-            marks=pytest.mark.xfail,
         ),
     ),
 )
@@ -53,7 +53,7 @@ def test_unmined_transaction_wait_for_receipt(web3):
         'to': '0xd3CdA913deB6f67967B99D67aCDFa1712C293601',
         'value': 123457
     })
-    with pytest.raises(ValueError):
+    with pytest.raises(TransactionNotFound):
         web3.eth.getTransactionReceipt(txn_hash)
 
     txn_receipt = web3.eth.waitForTransactionReceipt(txn_hash)

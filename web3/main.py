@@ -19,6 +19,7 @@ from web3._utils.abi import (
 )
 from web3._utils.decorators import (
     combomethod,
+    deprecated_for,
 )
 from web3._utils.empty import (
     empty,
@@ -31,14 +32,22 @@ from web3._utils.encoding import (
     to_text,
     to_json,
 )
+from web3._utils.module import (
+    attach_modules,
+)
 from web3._utils.normalizers import (
     abi_ens_resolver,
 )
-from web3.admin import (
-    Admin,
-)
 from web3.eth import (
     Eth,
+)
+from web3.geth import (
+    Geth,
+    GethAdmin,
+    GethMiner,
+    GethPersonal,
+    GethShh,
+    GethTxPool,
 )
 from web3.iban import (
     Iban,
@@ -46,17 +55,13 @@ from web3.iban import (
 from web3.manager import (
     RequestManager as DefaultRequestManager,
 )
-from web3.miner import (
-    Miner,
-)
 from web3.net import (
     Net,
 )
 from web3.parity import (
     Parity,
-)
-from web3.personal import (
-    Personal,
+    ParityPersonal,
+    ParityShh,
 )
 from web3.providers.eth_tester import (
     EthereumTesterProvider,
@@ -73,9 +78,6 @@ from web3.providers.websocket import (
 from web3.testing import (
     Testing,
 )
-from web3.txpool import (
-    TxPool,
-)
 from web3.version import (
     Version,
 )
@@ -83,15 +85,21 @@ from web3.version import (
 
 def get_default_modules():
     return {
-        "eth": Eth,
-        "net": Net,
-        "personal": Personal,
-        "version": Version,
-        "txpool": TxPool,
-        "miner": Miner,
-        "admin": Admin,
-        "parity": Parity,
-        "testing": Testing,
+        "eth": (Eth,),
+        "net": (Net,),
+        "version": (Version,),
+        "parity": (Parity, {
+            "personal": (ParityPersonal,),
+            "shh": (ParityShh,),
+        }),
+        "geth": (Geth, {
+            "admin": (GethAdmin,),
+            "miner": (GethMiner,),
+            "personal": (GethPersonal,),
+            "shh": (GethShh,),
+            "txpool": (GethTxPool,),
+        }),
+        "testing": (Testing,),
     }
 
 
@@ -130,8 +138,7 @@ class Web3:
         if modules is None:
             modules = get_default_modules()
 
-        for module_name, module_class in modules.items():
-            module_class.attach(self, module_name)
+        attach_modules(self, modules)
 
         self.ens = ens
 
@@ -146,6 +153,20 @@ class Web3:
     @provider.setter
     def provider(self, provider):
         self.manager.provider = provider
+
+    @property
+    def clientVersion(self):
+        return self.manager.request_blocking("web3_clientVersion", [])
+
+    @property
+    def api(self):
+        from web3 import __version__
+        return __version__
+
+    @deprecated_for("keccak")
+    @apply_to_return_value(HexBytes)
+    def sha3(primitive=None, text=None, hexstr=None):
+        return Web3.keccak(primitive, text, hexstr)
 
     @staticmethod
     @apply_to_return_value(HexBytes)
@@ -162,6 +183,11 @@ class Web3:
                 {'text': text, 'hexstr': hexstr}
             )
         )
+
+    @combomethod
+    @deprecated_for("solidityKeccak")
+    def soliditySha3(cls, abi_types, values):
+        return cls.solidityKeccak(abi_types, values)
 
     @combomethod
     def solidityKeccak(cls, abi_types, values):

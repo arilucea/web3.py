@@ -282,7 +282,7 @@ def generate_go_ethereum_fixture(destination_dir):
         pprint.pprint(config)
         write_config_json(config, datadir)
 
-        shutil.copytree(datadir, destination_dir)
+        shutil.make_archive(destination_dir, 'zip', datadir)
 
 
 def verify_chain_state(web3, chain_data):
@@ -292,22 +292,22 @@ def verify_chain_state(web3, chain_data):
 
 
 def mine_transaction_hash(web3, txn_hash):
-    web3.miner.start(1)
+    web3.geth.miner.start(1)
     try:
         return web3.eth.waitForTransactionReceipt(txn_hash, timeout=60)
     finally:
-        web3.miner.stop()
+        web3.geth.miner.stop()
 
 
 def mine_block(web3):
     origin_block_number = web3.eth.blockNumber
 
     start_time = time.time()
-    web3.miner.start(1)
+    web3.geth.miner.start(1)
     while time.time() < start_time + 60:
         block_number = web3.eth.blockNumber
         if block_number > origin_block_number:
-            web3.miner.stop()
+            web3.geth.miner.stop()
             return block_number
         else:
             time.sleep(0.1)
@@ -316,7 +316,7 @@ def mine_block(web3):
 
 
 def deploy_contract(web3, name, factory):
-    web3.personal.unlockAccount(web3.eth.coinbase, KEYFILE_PW)
+    web3.geth.personal.unlockAccount(web3.eth.coinbase, KEYFILE_PW)
     deploy_txn_hash = factory.constructor().transact({'from': web3.eth.coinbase})
     print('{0}_CONTRACT_DEPLOY_HASH: '.format(name.upper()), deploy_txn_hash)
     deploy_receipt = mine_transaction_hash(web3, deploy_txn_hash)
@@ -375,8 +375,8 @@ def setup_chain_state(web3):
     #
     # Block with Transaction
     #
-    web3.personal.unlockAccount(coinbase, KEYFILE_PW)
-    web3.miner.start(1)
+    web3.geth.personal.unlockAccount(coinbase, KEYFILE_PW)
+    web3.geth.miner.start(1)
     mined_txn_hash = web3.eth.sendTransaction({
         'from': coinbase,
         'to': coinbase,
